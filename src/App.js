@@ -4,6 +4,7 @@ import "./App.css";
 import * as tf from "@tensorflow/tfjs";
 import * as facemesh from "@tensorflow-models/facemesh";
 import Webcam from "react-webcam";
+import { drawMesh } from "./utilities";
 
 function App() {
   // Setup references
@@ -16,6 +17,10 @@ function App() {
       inputResolution: { width: 640, height: 480 },
       scale: 0.0,
     });
+
+    setInterval(() => {
+      detect(net);
+    }, 100);
   };
 
   // Define detect function
@@ -24,10 +29,32 @@ function App() {
     if (
       typeof webcamRef.current !== "undefined" &&
       webcamRef.current !== null &&
-      webcamRef.current.video.readState === 4
+      webcamRef.current.video.readyState === 4
     ) {
+      // Get Video Props
+      const video = webcamRef.current.video;
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+
+      // Set Video Width
+      webcamRef.current.video.width = videoWidth;
+      webcamRef.current.video.height = videoHeight;
+
+      // Set Canvas Width
+      canvasref.current.width = videoWidth;
+      canvasref.current.height = videoHeight;
+
+      // Make Detections
+      const face = await net.estimateFaces(video);
+      console.log(face);
+
+      // Get Canvas Context For Drawing
+      const ctx = canvasref.current.getContext("2d");
+      drawMesh(face, ctx);
     }
   };
+
+  runFacemesh();
 
   return (
     <div className="App">
